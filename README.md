@@ -97,6 +97,7 @@ HEADLINES_MAX_ITEMS=5
 HEADLINES_TIMEOUT_MS=4000
 HEADLINES_URL=https://www.kbzk.com/news.rss
 HEADLINES_FALLBACK_URL=https://www.kbzk.com/news/rss
+HEADLINES_EXCLUDE_TOWNS=Springfield,Shelbyville,Ogdenville,North Haverbrook,Capital City
 
 # E-Paper display configuration
 EPD_IP=192.168.1.123

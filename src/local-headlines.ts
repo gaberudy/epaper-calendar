@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import dotenv from 'dotenv';
 
 type FetchOpts = {
   url?: string;                 // default below
@@ -58,9 +59,14 @@ export async function fetchKBZKLocalHeadlines(opts: FetchOpts = {}): Promise<str
     return link.includes("/local-news/");
   });
 
-  // Exclude town names in the title (case-insensitive)
-  const re = new RegExp(`\\b(${excludes.map(escapeRegex).join("|")})\\b`, "i");
-  const filtered = onlyLocal.filter(it => !re.test(String(it.title ?? "")));
+  // Exclude town names in the title (case-insensitive), but only if excludes is non-empty
+  let filtered: typeof onlyLocal;
+  if (excludes.length > 0) {
+    const re = new RegExp(`\\b(${excludes.map(escapeRegex).join("|")})\\b`, "i");
+    filtered = onlyLocal.filter(it => !re.test(String(it.title ?? "")));
+  } else {
+    filtered = onlyLocal;
+  }
 
   // Clean titles, dedupe by title text, cap
   const seen = new Set<string>();
@@ -100,4 +106,49 @@ function deentitize(s: string): string {
 
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+
+// Only run CLI if this is the main module
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(err => {
+    console.error(err.stack || String(err));
+    process.exit(1);
+  });
+}
+
+async function main() {
+  console.log('Fetching local headlines...');
+  dotenv.config();
+  
+  // Use environment variables for configuration
+  const options: FetchOpts = {
+    maxItems: process.env.HEADLINES_MAX_ITEMS ? parseInt(process.env.HEADLINES_MAX_ITEMS) : undefined,
+    timeoutMs: process.env.HEADLINES_TIMEOUT_MS ? parseInt(process.env.HEADLINES_TIMEOUT_MS) : undefined,
+    excludeTowns: process.env.HEADLINES_EXCLUDE_TOWNS ? process.env.HEADLINES_EXCLUDE_TOWNS.split(',').map(s => s.trim()) : undefined,
+  };
+  
+  console.log('Environment config:', {
+    HEADLINES_URL: process.env.HEADLINES_URL || 'default',
+    HEADLINES_MAX_ITEMS: process.env.HEADLINES_MAX_ITEMS || 'default (5)',
+    HEADLINES_TIMEOUT_MS: process.env.HEADLINES_TIMEOUT_MS || 'default (4000)',
+  });
+  
+  try {
+    const headlines = await fetchKBZKLocalHeadlines(options);
+    
+    console.log('\n=== Local Headlines ===');
+    if (headlines.length === 0) {
+      console.log('No local headlines found.');
+    } else {
+      headlines.forEach((headline, index) => {
+        console.log(`${index + 1}. ${headline}`);
+      });
+    }
+    console.log(`\nTotal headlines: ${headlines.length}`);
+    
+  } catch (error) {
+    console.error('Error fetching headlines:', error);
+    process.exit(1);
+  }
 }

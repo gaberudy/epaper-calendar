@@ -40,10 +40,12 @@ async function run() {
 
   const headlinesMaxItems = parseInt(process.env.HEADLINES_MAX_ITEMS || "5");
   const headlinesTimeout = parseInt(process.env.HEADLINES_TIMEOUT_MS || "4000");
+  const excludeTowns = process.env.HEADLINES_EXCLUDE_TOWNS ? process.env.HEADLINES_EXCLUDE_TOWNS.split(',').map(s => s.trim()) : undefined;
 
   const headlines = await fetchKBZKLocalHeadlines({
     maxItems: headlinesMaxItems,
     timeoutMs: headlinesTimeout,
+    excludeTowns,
   });
   console.log("[HEADLINES] Data:", headlines);
 

@@ -5,6 +5,7 @@
   "main": "uploader-claude.js",
   "scripts": {
     "upload": "tsx src/upload-epd.ts",
+    "local-headlines": "tsx src/local-headlines.ts",
     "run": "tsx src/run.ts",
     "build": "docker build -t epaper-calendar .",
     "run-docker": "docker run --env-file .env epaper-calendar"
